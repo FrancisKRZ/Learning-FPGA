@@ -1,0 +1,29 @@
+// Testbench code for AND Flip-Flop LED design
+// It has 2 inputs (1-bit) and 1 output (16-bits)
+// input btnL  btnR , output [15:0] led 
+module And_Gate_TB();
+  
+  reg r_In1, r_In2;
+  wire w_Out;
+  
+  And_Gate_Project UUT
+  (.btnL(r_In1), .btnR(r_In2), .led(w_Out));
+  
+  initial
+    begin
+      $dumpfile("dump.vcd"); $dumpvars;
+      r_In1 <= 1'b0;
+      r_In2 <= 1'b0;
+      #10;
+      r_In1 <= 1'b0;
+      r_In2 <= 1'b1;
+      #10
+      r_In1 <= 1'b1;
+      r_In2 <= 1'b0;
+      #10
+      r_In1 <= 1'b1;
+      r_In2 <= 1'b1;
+      #10
+      $finish();
+    end
+endmodule
