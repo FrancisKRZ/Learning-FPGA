@@ -1,29 +1,57 @@
 // Testbench code for AND Flip-Flop LED design
 // It has 2 inputs (1-bit) and 1 output (16-bits)
 // input btnL  btnR , output [15:0] led 
-module And_Gate_TB();
+module LED_Toggle_TOP_TB();
+
+  // Testbench signals
+  reg clk;
+  reg btnL, btnR;
+  wire [15:0] led;
+
+  LED_Toggle_TOP UUT (
+    .clk(clk),
+    .btnL(btnL),
+    .btnR(btnR),
+    .led(led)
+  );
   
-  reg r_In1, r_In2;
-  wire w_Out;
-  
-  LED_Toggle_TOP UUT
-  (.clk(clk), .btnL(r_In1), .btnR(r_In2), .led(w_Out));
-  
-  initial
-    begin
-      $dumpfile("dump.vcd"); $dumpvars;
-      r_In1 <= 1'b0;
-      r_In2 <= 1'b0;
-      #10;
-      r_In1 <= 1'b0;
-      r_In2 <= 1'b1;
-      #10;
-      r_In1 <= 1'b1;
-      r_In2 <= 1'b0;
-      #10;
-      r_In1 <= 1'b1;
-      r_In2 <= 1'b1;
-      #10;
-      $finish();
-    end
+
+  initial begin
+    clk = 0;
+    forever #25 clk = ~clk;
+  end
+
+  initial begin
+    // Dump waveform to file for viewing later
+    $dumpfile("LED_Toggle_TOP_TB.vcd");
+    
+    btnL = 1'b0;
+    btnR = 1'b0;
+
+    #100; // Wait 100ns
+    
+    // Test scenario 1: btnL = 0, btnR = 1 (this should toggle the LEDs)
+    btnL = 1'b0;
+    btnR = 1'b1;
+    #100; // Wait 100ns to observe changes
+    
+    // Test scenario 2: btnL = 1, btnR = 0 (no change should happen)
+    btnL = 1'b1;
+    btnR = 1'b0;
+    #100;
+
+    // Test scenario 3: btnL = 0, btnR = 1 (this should toggle the LEDs again)
+    btnL = 1'b0;
+    btnR = 1'b1;
+    #100;
+
+    // Test scenario 4: Both buttons high (no change should happen)
+    btnL = 1'b1;
+    btnR = 1'b1;
+    #100;
+
+    // End the simulation
+    $finish();
+  end
+
 endmodule
