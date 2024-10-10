@@ -6,8 +6,8 @@ module And_Gate_TB();
   reg r_In1, r_In2;
   wire w_Out;
   
-  And_Gate_Project UUT
-  (.btnL(r_In1), .btnR(r_In2), .led(w_Out));
+  LED_Toggle_TOP UUT
+  (.clk(clk), .btnL(r_In1), .btnR(r_In2), .led(w_Out));
   
   initial
     begin
@@ -17,13 +17,13 @@ module And_Gate_TB();
       #10;
       r_In1 <= 1'b0;
       r_In2 <= 1'b1;
-      #10
+      #10;
       r_In1 <= 1'b1;
       r_In2 <= 1'b0;
-      #10
+      #10;
       r_In1 <= 1'b1;
       r_In2 <= 1'b1;
-      #10
+      #10;
       $finish();
     end
 endmodule
