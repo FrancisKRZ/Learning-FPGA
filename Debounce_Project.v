@@ -1,4 +1,5 @@
 `timescale 1ns / 100ps
+//////////////////////////////////////////////////////////////////////////////////
 
 // Project 4 ---- Debouncing a Switch
 // In this project we'll be fixing the issue of 
@@ -14,19 +15,27 @@
 // Debounce Module Top
 module Debounce_TOP(input i_Clk, i_btnL, output [15:0] o_led);
 
-    wire w_Debounced_Switch;
+    //wire w_Debounced_Switch;
+    wire w_Debounced_btnL;
+    wire w_Debounced_btnR;
 
-    // 1) Debounce Switch
+    // 1) Debounce Switch Left
     Debounce_Filter #(
-        .DEBOUNCE_LIMIT(20000000)) 
-    
+        .DEBOUNCE_LIMIT(2250000)) 
         Debounce_Inst(
-            .i_Clk(i_Clk), .i_Bouncy(i_btnL), .o_Debounced(w_Debounced_Switch)
+            .i_Clk(i_Clk), .i_Bouncy(i_btnL), .o_Debounced(w_Debounced_btnL)
         );
+
+    // Debounce Switch Right
+    Debounce_Filter #(
+        .DEBOUNCE_LIMIT(2250000)) 
+    Debounce_Inst_R(
+        .i_Clk(i_Clk), .i_Bouncy(i_btnR), .o_Debounced(w_Debounced_btnR)
+    );
 
     // 2) Previous Project
     LED_Toggle_TOP LED_Toggle_Inst(
-        .i_Clk(i_Clk), .i_btnL(w_Debounced_Switch), .o_led(o_led)
+        .i_Clk(i_Clk), .i_btnL(w_Debounced_btnL), .i_btnR(w_Debounced_btnR), .o_led(o_led)
         );
 
 endmodule
@@ -76,8 +85,8 @@ endmodule
 module LED_Toggle_TOP(input i_Clk, input i_btnL, i_btnR, output [15:0] o_led);
 
     // Flip-Flops
-    reg [7:0] left_led_status = 8'b0;
-    reg [7:0] right_led_status = 8'b0;
+    reg [7:0] left_led_status = 8'hFF;
+    reg [7:0] right_led_status = 8'hFF;
 
 
     // Clock cycle(s)
@@ -85,11 +94,28 @@ module LED_Toggle_TOP(input i_Clk, input i_btnL, i_btnR, output [15:0] o_led);
         
         // btnL <= btnR;
 
-        if (i_btnL == 1'b0 && i_btnR == 1'b1) begin
-
-            left_led_status = ~left_led_status;
+        if (i_btnL == 1'b1 && i_btnR == 1'b0) begin
             right_led_status = ~right_led_status;
         end
+        
+        else if (i_btnL == 1'b0 && i_btnR == 1'b1) begin
+            left_led_status = ~left_led_status;             
+        end
+
+        else if (i_btnL == 1'b1 && i_btnR == 1'b1) begin
+            right_led_status = ~right_led_status;
+            left_led_status = ~left_led_status;
+        end
+
+
+
+        //if (i_btnL == 1'b0) begin
+          //  left_led_status = ~left_led_status;
+        //end
+
+        //if (i_btnR == 1'b1) begin
+          //  right_led_status = ~right_led_status;
+        //end
 
     end
 
