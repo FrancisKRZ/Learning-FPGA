@@ -1,0 +1,136 @@
+// Simulating an unstable input from a bouncing switch
+// such that we may confirm the debounce filter
+// is working as intended by delaying the output
+// until the switch has settled into a stable state.
+
+module Debounce_Filter_TB();
+
+    reg r_Clk = 1'b0, r_Bouncy = 1'b0;
+    wire w_Debounced;
+
+    // Clock generation: 2 ns period
+    always #2 r_Clk <= !r_Clk;
+
+    // Instantiate the Unit Under Test (UUT)
+    Debounce_Filter #(.DEBOUNCE_LIMIT(10)) UUT (
+        .i_Clk(r_Clk),
+        .i_Bouncy(r_Bouncy),
+        .o_Debounced(w_Debounced)
+    );
+
+    initial begin
+        $dumpfile("dump.vcd"); 
+        $dumpvars(0, Debounce_Filter_TB);
+
+        // Simulate bouncing input
+        repeat(3) @(posedge r_Clk);
+        r_Bouncy <= 1'b1;
+
+        @(posedge r_Clk);
+        r_Bouncy <= 1'b0;
+
+        @(posedge r_Clk);
+        r_Bouncy <= 1'b1;
+
+        repeat(20) @(posedge r_Clk); // Extend observation period
+
+        $display("Test Complete");
+        $finish;
+    end
+    
+endmodule
+
+
+
+// Testing the LED Toggle module
+module LED_Toggle_TOP_TB();
+
+    // Input declarations
+    reg r_Clk = 1'b0; 
+    reg i_btnL = 1'b0, i_btnR = 1'b0, i_btnC = 1'b0;
+
+    wire [15:0] o_led;
+
+    // Clock generation: Toggle every 2 ns
+    always #2 r_Clk <= !r_Clk;
+
+    // Instantiate the Unit Under Test (UUT)
+    LED_Toggle_TOP UUT (
+        .i_Clk(r_Clk),
+        .i_btnL(i_btnL),
+        .i_btnR(i_btnR),
+        .i_btnC(i_btnC),
+        .o_led(o_led)
+    );
+
+    // Task for assertion
+    task assert_condition;
+        input condition;
+        input [1023:0] message;
+        begin
+            if (!condition) begin
+                $error("ASSERTION FAILED: %s at time %0dns", message, $time);
+                $fatal; // Ends the simulation immediately
+            end
+        end
+    endtask
+
+    initial begin
+        // // Dump waveforms for simulation
+        // $dumpfile("LED_Toggle_TOP_TB.vcd");
+        // $dumpvars(0, LED_Toggle_TOP_TB);
+
+        // Monitor outputs
+        $monitor("Time: %0dns | i_btnL: %b | i_btnR: %b | i_btnC: %b | o_led: %h", 
+                 $time, i_btnL, i_btnR, i_btnC, o_led);
+
+        // Initial state: All buttons low
+        @(posedge r_Clk);
+        i_btnL <= 1'b0; 
+        i_btnR <= 1'b0; 
+        i_btnC <= 1'b0;
+        @(posedge r_Clk);
+        assert_condition(o_led == 16'hFFFF, "Initial state: LEDs should all be ON.");
+
+        // Reset state (i_btnC = 1)
+        @(posedge r_Clk);
+        i_btnC <= 1'b1;
+        @(posedge r_Clk);
+        assert_condition(o_led == 16'hFFFF, "Reset state: LEDs should all be ON.");
+        i_btnC <= 1'b0;
+
+        // Toggle left LEDs (i_btnL = 1, i_btnR = 0)
+        @(posedge r_Clk);
+        i_btnL <= 1'b1;
+        @(posedge r_Clk);
+        @(posedge r_Clk);
+        assert_condition(o_led[15:8] == 8'h00, "Left LEDs should be toggled OFF.");
+        assert_condition(o_led[7:0] == 8'hFF, "Right LEDs should remain ON.");
+        i_btnL <= 1'b0;
+
+        // Toggle right LEDs (i_btnL = 0, i_btnR = 1)
+        @(posedge r_Clk);
+        i_btnR <= 1'b1;
+        @(posedge r_Clk);
+        @(posedge r_Clk);
+        assert_condition(o_led[15:8] == 8'h00, "Left LEDs should remain OFF.");
+        assert_condition(o_led[7:0] == 8'h00, "Right LEDs should be toggled OFF.");
+        i_btnR <= 1'b0;
+
+        // Swap LEDs (i_btnL = 1, i_btnR = 1)
+        @(posedge r_Clk);
+        i_btnL <= 1'b1;
+        i_btnR <= 1'b1;
+        @(posedge r_Clk);
+        @(posedge r_Clk);
+        assert_condition(o_led[15:8] == 8'hFF, "Left LEDs should be toggled back ON.");
+        assert_condition(o_led[7:0] == 8'hFF, "Right LEDs should be toggled back ON.");
+        i_btnL <= 1'b0;
+        i_btnR <= 1'b0;
+
+        // End simulation
+        $display("All assertions passed. Test Complete.");
+        $finish;
+    end
+
+endmodule
